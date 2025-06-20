@@ -8,7 +8,7 @@ Or can access UI using `adk web`
 ![alt text](image.png)
 
 ## using dev UI (adk web)
-![alt text](image-1.png)
+![alt text](image-2.png)
 
 # Open-Meteo API
 - The get_weather function in agent.py is now updated to retrieve weather data for any location using the Open-Meteo API. 
