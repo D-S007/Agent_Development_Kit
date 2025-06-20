@@ -1,9 +1,10 @@
 import datetime
 from zoneinfo import ZoneInfo
 from google.adk.agents import Agent
+import requests
 
 def get_weather(city: str) -> dict:
-    """Retrieves the current weather report for a specified city.
+    """Retrieves the current weather report for a specified city using Open-Meteo API.
 
     Args:
         city (str): The name of the city for which to retrieve the weather report.
@@ -11,19 +12,28 @@ def get_weather(city: str) -> dict:
     Returns:
         dict: status and result or error msg.
     """
-    if city.lower() == "new york":
-        return {
-            "status": "success",
-            "report": (
-                "The weather in New York is sunny with a temperature of 25 degrees"
-                " Celsius (77 degrees Fahrenheit)."
-            ),
-        }
-    else:
-        return {
-            "status": "error",
-            "error_message": f"Weather information for '{city}' is not available.",
-        }
+    try:
+        # Geocoding to get latitude and longitude
+        geo_url = f"https://geocoding-api.open-meteo.com/v1/search?name={city}&count=1"
+        geo_resp = requests.get(geo_url)
+        geo_data = geo_resp.json()
+        if not geo_data.get("results"):
+            return {"status": "error", "error_message": f"Could not find location for '{city}'."}
+        lat = geo_data["results"][0]["latitude"]
+        lon = geo_data["results"][0]["longitude"]
+        # Get current weather
+        weather_url = f"https://api.open-meteo.com/v1/forecast?latitude={lat}&longitude={lon}&current_weather=true"
+        weather_resp = requests.get(weather_url)
+        weather_data = weather_resp.json()
+        if "current_weather" not in weather_data:
+            return {"status": "error", "error_message": f"Weather data not available for '{city}'."}
+        weather = weather_data["current_weather"]
+        temp = weather["temperature"]
+        wind = weather["windspeed"]
+        desc = f"The weather in {city.title()} is {temp}°C with wind speed {wind} km/h."
+        return {"status": "success", "report": desc}
+    except Exception as e:
+        return {"status": "error", "error_message": str(e)}
 
 
 def get_current_time(city: str) -> dict:
