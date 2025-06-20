@@ -37,7 +37,7 @@ def get_weather(city: str) -> dict:
 
 
 def get_current_time(city: str) -> dict:
-    """Returns the current time in a specified city.
+    """Returns the current time in a specified city using geocoding and timezone info.
 
     Args:
         city (str): The name of the city for which to retrieve the current time.
@@ -45,23 +45,22 @@ def get_current_time(city: str) -> dict:
     Returns:
         dict: status and result or error msg.
     """
-
-    if city.lower() == "new york":
-        tz_identifier = "America/New_York"
-    else:
-        return {
-            "status": "error",
-            "error_message": (
-                f"Sorry, I don't have timezone information for {city}."
-            ),
-        }
-
-    tz = ZoneInfo(tz_identifier)
-    now = datetime.datetime.now(tz)
-    report = (
-        f'The current time in {city} is {now.strftime("%Y-%m-%d %H:%M:%S %Z%z")}'
-    )
-    return {"status": "success", "report": report}
+    try:
+        # Geocoding to get latitude, longitude, and timezone
+        geo_url = f"https://geocoding-api.open-meteo.com/v1/search?name={city}&count=1"
+        geo_resp = requests.get(geo_url)
+        geo_data = geo_resp.json()
+        if not geo_data.get("results"):
+            return {"status": "error", "error_message": f"Could not find location for '{city}'."}
+        tz_identifier = geo_data["results"][0].get("timezone")
+        if not tz_identifier:
+            return {"status": "error", "error_message": f"Timezone information not available for '{city}'."}
+        tz = ZoneInfo(tz_identifier)
+        now = datetime.datetime.now(tz)
+        report = f'The current time in {city.title()} is {now.strftime("%Y-%m-%d %H:%M:%S %Z%z")}'
+        return {"status": "success", "report": report}
+    except Exception as e:
+        return {"status": "error", "error_message": str(e)}
 
 
 root_agent = Agent(
