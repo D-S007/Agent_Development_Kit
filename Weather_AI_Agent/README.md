@@ -1,6 +1,6 @@
 # Agent_Development_Kit
 ## To Run agent
-`adk run multi_tool_agent` (inside parent_folder)
+`adk run multi_tool_agent` (inside Weather_AI_Agent)
 Or can access UI using `adk web`
 
 # Response
